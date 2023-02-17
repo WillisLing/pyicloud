@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from pyicloud_ipd.cmdline import main
+from pyicloud.cmdline import main
 
 
 class SanityTestCase(TestCase):

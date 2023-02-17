@@ -5,8 +5,8 @@ import base64
 import re
 
 from datetime import datetime
-from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedErrror
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud.exceptions import PyiCloudServiceNotActivatedErrror
+from pyicloud.exceptions import PyiCloudAPIResponseError
 
 import pytz
 

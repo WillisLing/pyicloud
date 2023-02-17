@@ -2,4 +2,4 @@
 # (There are some small differences between Python 2 and 3)
 set -euo pipefail
 echo "Running pylint for Python 3..."
-python3 -m pylint pyicloud_ipd/
+python3 -m pylint pyicloud/

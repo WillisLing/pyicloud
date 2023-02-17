@@ -3,7 +3,7 @@ import sys
 
 import six
 
-from pyicloud_ipd.exceptions import PyiCloudNoDevicesException
+from pyicloud.exceptions import PyiCloudNoDevicesException
 
 
 class FindMyiPhoneServiceManager(object):

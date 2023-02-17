@@ -6,7 +6,7 @@ with open('requirements.txt') as f:
 
 
 setup(
-    name='pyicloud_ipd',
+    name='pyicloud',
     version="0.10.2",
     url='https://github.com/icloud-photos-downloader/pyicloud',
     description=(
@@ -27,7 +27,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'icloud = pyicloud_ipd.cmdline:main'
+            'icloud = pyicloud.cmdline:main'
         ]
     },
 )

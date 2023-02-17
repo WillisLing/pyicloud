@@ -11,7 +11,7 @@ import sys
 
 from click import confirm
 
-import pyicloud_ipd
+import pyicloud
 from . import utils
 
 
@@ -206,7 +206,7 @@ def main(args=None):
             parser.error('No password supplied')
 
         try:
-            api = pyicloud_ipd.PyiCloudService(
+            api = pyicloud.PyiCloudService(
                 domain,
                 username.strip(),
                 password.strip()
@@ -243,7 +243,7 @@ def main(args=None):
                     sys.exit(1)
 
             break
-        except pyicloud_ipd.exceptions.PyiCloudFailedLoginException:
+        except pyicloud.exceptions.PyiCloudFailedLoginException:
             # If they have a stored password; we just used it and
             # it did not work; let's delete it if there is one.
             if utils.password_exists_in_keyring(username):

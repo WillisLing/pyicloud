@@ -43,19 +43,19 @@ jobs:
     - name: Retrieve version and Changelog
       id: get_version
       run: |
-        echo pyicloud_ipd_version=$(cat setup.py | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
-        echo 'pyicloud_ipd_changelog<<EOF' >> $GITHUB_OUTPUT
+        echo pyicloud_version=$(cat setup.py | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
+        echo 'pyicloud_changelog<<EOF' >> $GITHUB_OUTPUT
         scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_OUTPUT
         echo 'EOF' >> $GITHUB_OUTPUT
 
     - name: Log version and Changelog
       run: |
-        echo "pyicloud_ipd_version=${{steps.get_version.outputs.pyicloud_ipd_version}}"
-        echo "pyicloud_ipd_changelog=${{steps.get_version.outputs.pyicloud_ipd_changelog}}"
+        echo "pyicloud_version=${{steps.get_version.outputs.pyicloud_version}}"
+        echo "pyicloud_changelog=${{steps.get_version.outputs.pyicloud_changelog}}"
 
     outputs:
-      pyicloud_ipd_version: ${{steps.get_version.outputs.pyicloud_ipd_version}}
-      pyicloud_ipd_changelog: ${{steps.get_version.outputs.pyicloud_ipd_changelog}}
+      pyicloud_version: ${{steps.get_version.outputs.pyicloud_version}}
+      pyicloud_changelog: ${{steps.get_version.outputs.pyicloud_changelog}}
 
   build:
     runs-on: ${{ matrix.os }}
@@ -87,7 +87,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: pyicloud_ipd-${{needs.get_version.outputs.pyicloud_ipd_version}}-artifacts
+        name: pyicloud-${{needs.get_version.outputs.pyicloud_version}}-artifacts
         if-no-files-found: error
         path: |
           dist/pyicloud*
