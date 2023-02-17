@@ -6,6 +6,9 @@ class PyiCloudException(Exception):
     pass
 
 
+class PyiCloudConnectionException(PyiCloudException):
+    pass
+
 # API
 class PyiCloudAPIResponseException(PyiCloudException):
     """iCloud response exception."""

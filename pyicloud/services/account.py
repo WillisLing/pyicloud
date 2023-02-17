@@ -7,7 +7,7 @@ from pyicloud.utils import underscore_to_camelcase
 class AccountService:
     """The 'Account' iCloud service."""
 
-    def __init__(self, service_root, session, params):
+    def __init__(self, domain, service_root, session, params):
         self.session = session
         self.params = params
         self._service_root = service_root
@@ -22,7 +22,12 @@ class AccountService:
         self._acc_family_member_photo_url = (
             "%s/family/getMemberPhoto" % self._acc_endpoint
         )
-        self._acc_storage_url = "https://setup.icloud.com/setup/ws/1/storageUsageInfo"
+        if (domain == 'com'):
+            self._acc_storage_url = "https://setup.icloud.com/setup/ws/1/storageUsageInfo"
+        elif (domain == 'cn'):
+            self._acc_storage_url = "https://setup.icloud.com.cn/setup/ws/1/storageUsageInfo"
+        else:
+            raise NotImplementedError(f"Domain '{domain}' is not supported yet")
 
     @property
     def devices(self):

@@ -11,6 +11,7 @@ import http.cookiejar as cookielib
 import getpass
 
 from pyicloud.exceptions import (
+    PyiCloudConnectionException,
     PyiCloudFailedLoginException,
     PyiCloudAPIResponseException,
     PyiCloud2SARequiredException,
@@ -75,7 +76,10 @@ class PyiCloudSession(Session):
 
         has_retried = kwargs.get("retried")
         kwargs.pop("retried", None)
-        response = super().request(method, url, **kwargs)
+		try:
+            response = super().request(method, url, **kwargs)
+        except requests.exceptions.SSLError:
+            raise PyiCloudConnectionException("Error establishing secure connection. Try --domain parameter")
 
         content_type = response.headers.get("Content-Type", "").split(";")[0]
         json_mimetypes = ["application/json", "text/json"]
@@ -200,12 +204,10 @@ class PyiCloudService:
         pyicloud.iphone.location()
     """
 
-    AUTH_ENDPOINT = "https://idmsa.apple.com/appleauth/auth"
-    HOME_ENDPOINT = "https://www.icloud.com"
-    SETUP_ENDPOINT = "https://setup.icloud.com/setup/ws/1"
 
     def __init__(
         self,
+		domain,
         apple_id,
         password=None,
         cookie_directory=None,
@@ -225,6 +227,17 @@ class PyiCloudService:
         self.password_filter = PyiCloudPasswordFilter(password)
         LOGGER.addFilter(self.password_filter)
 
+        self._domain = domain
+        if (domain == 'com'):
+            self._auth_endpoint = "https://idmsa.apple.com/appleauth/auth"
+            self._home_endpoint = 'https://www.icloud.com'
+            self._setup_endpoint = 'https://setup.icloud.com/setup/ws/1'
+        elif (domain == 'cn'):
+            self._auth_endpoint = "https://idmsa.apple.com.cn/appleauth/auth"
+            self._home_endpoint = 'https://www.icloud.com.cn'
+            self._setup_endpoint = 'https://setup.icloud.com.cn/setup/ws/1'
+        else:
+            raise NotImplementedError(f"Domain '{domain}' is not supported yet")
         if cookie_directory:
             self._cookie_directory = path.expanduser(path.normpath(cookie_directory))
             if not path.exists(self._cookie_directory):
@@ -355,6 +368,12 @@ class PyiCloudService:
         except PyiCloudAPIResponseException as error:
             msg = "Invalid authentication token."
             raise PyiCloudFailedLoginException(msg, error) from error
+			
+        # {'domainToUse': 'iCloud.com'}
+        domain_to_use = self.data.get('domainToUse')
+        if domain_to_use != None:
+            msg = f'Apple insists on using {domain_to_use} for your request. Please use --domain parameter'
+            raise PyiCloudConnectionException(msg)
 
     def _authenticate_with_credentials_service(self, service):
         """Authenticate to a specific service using credentials."""
@@ -391,7 +410,7 @@ class PyiCloudService:
             "Content-Type": "application/json",
             "X-Apple-OAuth-Client-Id": "d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d",
             "X-Apple-OAuth-Client-Type": "firstPartyAuth",
-            "X-Apple-OAuth-Redirect-URI": "https://www.icloud.com",
+            "X-Apple-OAuth-Redirect-URI": self._home_endpoint,
             "X-Apple-OAuth-Require-Grant-Code": "true",
             "X-Apple-OAuth-Response-Mode": "web_message",
             "X-Apple-OAuth-Response-Type": "code",
@@ -553,7 +572,7 @@ class PyiCloudService:
     def account(self):
         """Gets the 'Account' service."""
         service_root = self._get_webservice_url("account")
-        return AccountService(service_root, self.session, self.params)
+        return AccountService(self._domain, service_root, self.session, self.params)
 
     @property
     def files(self):
