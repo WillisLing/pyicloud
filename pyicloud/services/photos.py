@@ -176,9 +176,9 @@ class PhotosService:
                     continue
 
                 # TODO: Handle subfolders  # pylint: disable=fixme
-                if folder["recordName"] == "----Root-Folder----" or \
+                if folder["recordName"] in ("----Root-Folder----" or \
                     "----Project-Root-Folder----") or \
-                    folder["fields"].get("isDeleted")
+                    (folder["fields"].get("isDeleted")
                     and folder["fields"]["isDeleted"]["value"]
                 ):
                     continue
@@ -302,18 +302,6 @@ class PhotoAlbum:
 
         return self._len
 
-    # Perform the request in a separate method so that we
-    # can mock it to test session errors.
-    def photos_request(self, offset):
-        url = ('%s/records/query?' % self.service._service_endpoint) + \
-            urlencode(self.service.params)
-        return self.service.session.post(
-            url,
-            data=json.dumps(self._list_query_gen(
-                offset, self.list_type, self.direction,
-                self.query_filter)),
-            headers={'Content-type': 'text/plain'}
-        )
 
     @property
     def photos(self):
@@ -329,7 +317,7 @@ class PhotoAlbum:
             url = ("%s/records/query?" % self.service.service_endpoint) + urlencode(
                 self.service.params
             )
-			try:
+            try:
                 request = self.service.session.post(
                     url,
                     data=json.dumps(
@@ -339,10 +327,10 @@ class PhotoAlbum:
                     ),
                     headers={"Content-type": "text/plain"},
                 )
-			except PyiCloudAPIResponseException as ex:
+            except PyiCloudAPIResponseException as exc:
                 if self.exception_handler:
                     exception_retries += 1
-                    self.exception_handler(ex, exception_retries)
+                    self.exception_handler(exc, exception_retries)
                     continue
                 else:
                     raise
@@ -668,11 +656,11 @@ class PhotoAsset:
                     if (self.item_type == "image" and
                         version['type'] == "com.apple.quicktime-movie"):
                         if filename.lower().endswith('.heic'):
-                            version['filename']=re.sub(
-                                '\.[^.]+$', '_HEVC.MOV', version['filename'])
+                            version['filename'] = re.sub(
+                                '\\.[^.]+$', '_HEVC.MOV', version['filename'])
                         else:
                             version['filename'] = re.sub(
-                                '\.[^.]+$', '.MOV', version['filename'])
+                                '\\.[^.]+$', '.MOV', version['filename'])
 
                     self._versions[key] = version
 

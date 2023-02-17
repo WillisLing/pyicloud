@@ -3,6 +3,7 @@ from uuid import uuid1
 import inspect
 import json
 import logging
+import requests
 from requests import Session
 from tempfile import gettempdir
 from os import path, mkdir
@@ -76,7 +77,7 @@ class PyiCloudSession(Session):
 
         has_retried = kwargs.get("retried")
         kwargs.pop("retried", None)
-		try:
+        try:
             response = super().request(method, url, **kwargs)
         except requests.exceptions.SSLError:
             raise PyiCloudConnectionException("Error establishing secure connection. Try --domain parameter")
@@ -266,7 +267,7 @@ class PyiCloudService:
         self.session = PyiCloudSession(self)
         self.session.verify = verify
         self.session.headers.update(
-            {"Origin": self.HOME_ENDPOINT, "Referer": "%s/" % self.HOME_ENDPOINT}
+            {"Origin": self._home_endpoint, "Referer": "%s/" % self._home_endpoint}
         )
 
         cookiejar_path = self.cookiejar_path
@@ -336,7 +337,7 @@ class PyiCloudService:
 
             try:
                 self.session.post(
-                    "%s/signin" % self.AUTH_ENDPOINT,
+                    "%s/signin" % self._auth_endpoint,
                     params={"isRememberMeEnabled": "true"},
                     data=json.dumps(data),
                     headers=headers,
@@ -362,7 +363,7 @@ class PyiCloudService:
 
         try:
             req = self.session.post(
-                "%s/accountLogin" % self.SETUP_ENDPOINT, data=json.dumps(data)
+                "%s/accountLogin" % self._setup_endpoint, data=json.dumps(data)
             )
             self.data = req.json()
         except PyiCloudAPIResponseException as error:
@@ -371,7 +372,7 @@ class PyiCloudService:
 			
         # {'domainToUse': 'iCloud.com'}
         domain_to_use = self.data.get('domainToUse')
-        if domain_to_use != None:
+        if domain_to_use is not None:
             msg = f'Apple insists on using {domain_to_use} for your request. Please use --domain parameter'
             raise PyiCloudConnectionException(msg)
 
@@ -385,7 +386,7 @@ class PyiCloudService:
 
         try:
             self.session.post(
-                "%s/accountLogin" % self.SETUP_ENDPOINT, data=json.dumps(data)
+                "%s/accountLogin" % self._setup_endpoint, data=json.dumps(data)
             )
 
             self.data = self._validate_token()
@@ -397,7 +398,7 @@ class PyiCloudService:
         """Checks if the current access token is still valid."""
         LOGGER.debug("Checking session token validity")
         try:
-            req = self.session.post("%s/validate" % self.SETUP_ENDPOINT, data="null")
+            req = self.session.post("%s/validate" % self._setup_endpoint, data="null")
             LOGGER.debug("Session token is still valid")
             return req.json()
         except PyiCloudAPIResponseException as err:
@@ -461,7 +462,7 @@ class PyiCloudService:
     def trusted_devices(self):
         """Returns devices trusted for two-step authentication."""
         request = self.session.get(
-            "%s/listDevices" % self.SETUP_ENDPOINT, params=self.params
+            "%s/listDevices" % self._setup_endpoint, params=self.params
         )
         return request.json().get("devices")
 
@@ -469,7 +470,7 @@ class PyiCloudService:
         """Requests that a verification code is sent to the given device."""
         data = json.dumps(device)
         request = self.session.post(
-            "%s/sendVerificationCode" % self.SETUP_ENDPOINT,
+            "%s/sendVerificationCode" % self._setup_endpoint,
             params=self.params,
             data=data,
         )
@@ -482,7 +483,7 @@ class PyiCloudService:
 
         try:
             self.session.post(
-                "%s/validateVerificationCode" % self.SETUP_ENDPOINT,
+                "%s/validateVerificationCode" % self._setup_endpoint,
                 params=self.params,
                 data=data,
             )
@@ -510,7 +511,7 @@ class PyiCloudService:
 
         try:
             self.session.post(
-                "%s/verify/trusteddevice/securitycode" % self.AUTH_ENDPOINT,
+                "%s/verify/trusteddevice/securitycode" % self._auth_endpoint,
                 data=json.dumps(data),
                 headers=headers,
             )
@@ -538,7 +539,7 @@ class PyiCloudService:
 
         try:
             self.session.get(
-                f"{self.AUTH_ENDPOINT}/2sv/trust",
+                f"{self._auth_endpoint}/2sv/trust",
                 headers=headers,
             )
             self._authenticate_with_token()
